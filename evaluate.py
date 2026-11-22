@@ -3,10 +3,57 @@
 import argparse
 import json
 import math
+from statistics import median
 from pathlib import Path
 
 from verify import parse_number
 
+def performance_metrics(records: list[dict]) -> dict:
+    elapsed = [record["elapsed_seconds"] for record in records]
+    generation = []
+    prompt_seconds = []
+    load_seconds = []
+
+    for record in records:
+        raw = record.get("raw_response") or {}
+        if not isinstance(raw, dict):
+            continue
+
+        tokens = raw.get("eval_count")
+        duration = raw.get("eval_duration")
+        if (type(tokens) is int and tokens > 0
+                and type(duration) is int and duration > 0):
+            generation.append((tokens, duration / 1_000_000_000))
+
+        duration = raw.get("prompt_eval_duration")
+        if type(duration) is int and duration >= 0:
+            prompt_seconds.append(duration / 1_000_000_000)
+
+        duration = raw.get("load_duration")
+        if type(duration) is int and duration >= 0:
+            load_seconds.append(duration / 1_000_000_000)
+
+    generated_tokens = sum(tokens for tokens, _ in generation)
+    generation_seconds = sum(seconds for _, seconds in generation)
+
+    return {
+        "request_attempts": len(records),
+        "median_request_seconds": median(elapsed) if elapsed else None,
+        "generation_measurements": len(generation),
+        "attempts_without_usable_generation_metrics": (
+            len(records) - len(generation)
+        ),
+        "generation_tokens_per_second": (
+            generated_tokens / generation_seconds
+            if generation_seconds > 0 else None
+        ),
+        "prompt_measurements": len(prompt_seconds),
+        "median_prompt_seconds": (
+            median(prompt_seconds) if prompt_seconds else None
+        ),
+        "load_measurements": len(load_seconds),
+        "total_model_load_seconds": sum(load_seconds) if load_seconds else None,
+    }
 
 def evaluate(path: Path) -> dict:
     run = json.loads(path.read_text(encoding="utf-8"))
@@ -96,6 +143,8 @@ def evaluate(path: Path) -> dict:
         "records_without_usage": sum(not row.get("usage_known", False) for row in records),
         "average_elapsed_seconds": total_seconds / len(records),
     }
+    summary["performance"] = performance_metrics(records)
+    
     output = path.with_name(path.stem + ".summary.json")
     output.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
