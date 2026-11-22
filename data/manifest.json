@@ -1,0 +1,29 @@
+{
+  "dataset": "TAT-QA direct numeric table-cell subset",
+  "source_commit": "870accc41953dcde885aabeb963d94aabdc0fbc3",
+  "source": "https://github.com/NExTplusplus/TAT-QA",
+  "paper": "https://aclanthology.org/2021.acl-long.254/",
+  "license": "CC BY 4.0",
+  "selection": "Single numeric span; no comparison; table/table-text; at least one whole cell equals the signed reference value.",
+  "normalization": "Percent signs in reference answers imply percent scale. Reference values stay in reported units.",
+  "splits": {
+    "train": {
+      "url": "https://raw.githubusercontent.com/NExTplusplus/TAT-QA/870accc41953dcde885aabeb963d94aabdc0fbc3/dataset_raw/tatqa_dataset_train.json",
+      "source_sha256": "2df6e722cdbaaa37efcbfb280f5c9a15be29a6ec18f618ef936fe63cc6d07c69",
+      "count": 1818,
+      "prepared_sha256": "4bb2f0f27c56729dad94959001e3391c74e6aba2da481a9906c88268db4bbf8b"
+    },
+    "dev": {
+      "url": "https://raw.githubusercontent.com/NExTplusplus/TAT-QA/870accc41953dcde885aabeb963d94aabdc0fbc3/dataset_raw/tatqa_dataset_dev.json",
+      "source_sha256": "8da095a819af6db3c14877c6df2d4d29960e41d1a63dd1fa853507bd2a616af5",
+      "count": 233,
+      "prepared_sha256": "34818e3c22526cd31f2c190ccd50bc914051ebd98a59baaa99d4f2c0e64c1d49"
+    },
+    "test": {
+      "url": "https://raw.githubusercontent.com/NExTplusplus/TAT-QA/870accc41953dcde885aabeb963d94aabdc0fbc3/dataset_raw/tatqa_dataset_test_gold.json",
+      "source_sha256": "c4d08418359c1d76468dec420ee748a37f48c06b63cb8ec2766f19d5d314b597",
+      "count": 211,
+      "prepared_sha256": "418d1b5ffc6b2baac817bb36d6aec1d2f4d1adfeba0ab75d83693f71256ad4d8"
+    }
+  }
+}
