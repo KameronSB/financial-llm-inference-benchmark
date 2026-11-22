@@ -4,20 +4,34 @@ import json
 from typing import Literal
 
 from ollama import Client
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 OPTIONS = {"temperature": 0, "seed": 42, "num_ctx": 8192, "num_predict": 256}
 KEEP_ALIVE = "10m"
 
 
-class Extraction(BaseModel):
+class FoundExtraction(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
-    status: Literal["found", "not_found"]
-    value: str | None
+    status: Literal["found"]
+    value: str = Field(min_length=1)
     scale: Literal["", "thousand", "million", "billion", "percent"]
-    row: int | None
-    column: int | None
+    row: int = Field(ge=0)
+    column: int = Field(ge=0)
+
+
+class NotFoundExtraction(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    status: Literal["not_found"]
+    value: None
+    scale: Literal[""]
+    row: None
+    column: None
+
+
+class Extraction(RootModel[FoundExtraction | NotFoundExtraction]):
+    pass
 
 
 PROMPT = """Extract the answer to the question from ONE table cell.
@@ -32,7 +46,13 @@ Use an empty scale when no supported scale is indicated. It does not mean USD.
 If a single numeric cell cannot answer the question, return status='not_found',
 value=null, row=null, column=null and scale=''.
 Do not invent an answer.
-"""
+
+When status is 'found', value must be a nonempty string copied from the chosen
+numeric cell. The supplied row and column indices must identify that same cell.
+Never return a null value for a found answer. Headers, units and blank cells
+are not numeric answers. Use the supplied indices; do not renumber the table.
+Return only a JSON object matching this schema:
+""" + json.dumps(Extraction.model_json_schema(), ensure_ascii=False)
 
 
 def extract(client: Client, model: str, question: str,
@@ -63,7 +83,6 @@ def extract(client: Client, model: str, question: str,
         "usage": {"input_tokens": 0, "output_tokens": 0},
     }
 
-    # Stop the run after a failed request, preserving the failed attempt.
     try:
         response = client.chat(
             model=model,
@@ -77,7 +96,7 @@ def extract(client: Client, model: str, question: str,
         answer["error"] = f"{type(error).__name__}: {error}"
         return answer
 
-    # Preserve the response and usage before validating the model's answer.
+    # Keep the response and usage even if the answer fails validation.
     answer.update({
         "outcome": "invalid_output",
         "raw_response": response.model_dump(mode="json"),
