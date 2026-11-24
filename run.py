@@ -37,14 +37,23 @@ def main() -> None:
         "--exclude-contexts-from",
         help="Exclude every table context present in this saved run.",
     )
+    parser.add_argument(
+        "--model",
+        help="Ollama model tag; overrides OLLAMA_MODEL in .env.",
+    )
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be at least 1.")
 
     load_dotenv(ROOT / ".env", override=True, encoding="utf-8-sig")
-    model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b-instruct-q4_K_M").strip()
+    model = (
+        args.model
+        if args.model is not None
+        else os.getenv("OLLAMA_MODEL", "qwen2.5:7b-instruct-q4_K_M")
+    ).strip()
+
     if not model:
-        raise ValueError("OLLAMA_MODEL is empty in .env.")
+        raise ValueError("The model name must not be empty.")
 
     data_path = ROOT / "data" / f"{args.split}.json"
     if not data_path.exists():
@@ -149,10 +158,51 @@ def main() -> None:
             "keep_alive": KEEP_ALIVE,
             "request_timeout_seconds": REQUEST_TIMEOUT,
         },
+        "warmup": None,
         "records": [],
     }
     save_run(output, result)
     client = Client(timeout=REQUEST_TIMEOUT)
+
+    warmup_example = {
+        "question": "What was revenue in 2024?",
+        "table": [
+            ["Metric (in millions)", "2024"],
+            ["Revenue", "10.0"],
+        ],
+        "paragraphs": [],
+    }
+
+    warmup_start = time.perf_counter()
+    warmup_answer = extract(
+        client,
+        model,
+        warmup_example["question"],
+        warmup_example["table"],
+        warmup_example["paragraphs"],
+    )
+
+    result["warmup"] = {
+        "input": warmup_example,
+        "elapsed_seconds": round(
+            time.perf_counter() - warmup_start, 6
+        ),
+        "response": warmup_answer,
+    }
+    save_run(output, result)
+
+    if warmup_answer["outcome"] == "api_error":
+        raise SystemExit(
+            f"Warm-up failed: {warmup_answer['error']}\n"
+            f"Run saved to {output}; no benchmark requests were made."
+        )
+
+    print(
+        f"Warm-up: {warmup_answer['outcome']} "
+        "(excluded from benchmark scores and timings)",
+        flush=True,
+    )
+
 
     for index, example in enumerate(examples, 1):
         record = {
