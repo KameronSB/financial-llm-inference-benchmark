@@ -50,9 +50,70 @@ def main() -> None:
     if not data_path.exists():
         raise ValueError("Prepare the data first: uv run python prepare_data.py")
     data_bytes = data_path.read_bytes()
-    examples = json.loads(data_bytes)[:args.limit]
-    if not examples:
-        raise ValueError("The selected dataset is empty.")
+    dataset_sha256 = hashlib.sha256(data_bytes).hexdigest()
+    all_examples = json.loads(data_bytes)
+
+    excluded_contexts = set()
+    exclusion = None
+
+    if args.exclude_contexts_from:
+        exclusion_path = ROOT / args.exclude_contexts_from
+        exclusion_bytes = exclusion_path.read_bytes()
+        previous = json.loads(exclusion_bytes)
+
+        if (
+            not isinstance(previous, dict)
+            or previous.get("format_version") != 1
+            or previous.get("split") != args.split
+            or previous.get("dataset_sha256") != dataset_sha256
+        ):
+            raise ValueError(
+                "The exclusion run must use this dataset version and split."
+            )
+
+        previous_records = previous.get("records")
+        if not isinstance(previous_records, list) or not previous_records:
+            raise ValueError("The exclusion run has no records.")
+
+        known_contexts = {
+            example["id"]: example["context_id"]
+            for example in all_examples
+        }
+        for record in previous_records:
+            if not isinstance(record, dict):
+                raise ValueError("Invalid record in the exclusion run.")
+            identifier = record.get("id")
+            context = record.get("context_id")
+            if (
+                not isinstance(identifier, str)
+                or identifier not in known_contexts
+                or not isinstance(context, str)
+                or not context
+                or context != known_contexts[identifier]
+            ):
+                raise ValueError(
+                    "An exclusion record does not match the current dataset."
+                )
+            excluded_contexts.add(context)
+
+        exclusion = {
+            "file": args.exclude_contexts_from,
+            "sha256": hashlib.sha256(exclusion_bytes).hexdigest(),
+            "context_ids": sorted(excluded_contexts),
+        }
+
+    eligible = [
+        example for example in all_examples
+        if example["context_id"] not in excluded_contexts
+    ]
+    if not eligible:
+        raise ValueError("No eligible examples remain after applying exclusions.")
+    if len(eligible) < args.limit:
+        raise ValueError(
+            f"Only {len(eligible)} eligible examples remain; "
+            f"choose --limit at most {len(eligible)}."
+        )
+    examples = eligible[:args.limit]
 
     output = ROOT / args.out
     if output.suffix != ".json":
