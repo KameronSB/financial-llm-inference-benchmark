@@ -33,6 +33,10 @@ def main() -> None:
     parser.add_argument("--split", choices=["train", "dev", "test"], default="dev")
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--out", default="results/local/sample.json")
+    parser.add_argument(
+        "--exclude-contexts-from",
+        help="Exclude every table context present in this saved run.",
+    )
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be at least 1.")
