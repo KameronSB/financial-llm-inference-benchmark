@@ -131,8 +131,17 @@ def main() -> None:
         "started_at": datetime.now(timezone.utc).isoformat(),
         "selected_count": len(examples),
         "completed": False,
-        "dataset_sha256": hashlib.sha256(data_bytes).hexdigest(),
-        "prompt_sha256": hashlib.sha256(PROMPT.encode()).hexdigest(),
+        "dataset_sha256": dataset_sha256,
+        "selection": {
+            "method": "dataset_order",
+            "requested_limit": args.limit,
+            "eligible_count": len(eligible),
+            "selected_context_count": len({
+                example["context_id"] for example in examples
+            }),
+            "selected_ids": [example["id"] for example in examples],
+            "exclusion": exclusion,
+        },        "prompt_sha256": hashlib.sha256(PROMPT.encode()).hexdigest(),
         "settings": {
             "options": OPTIONS,
             "schema": Extraction.model_json_schema(),
