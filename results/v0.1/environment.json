@@ -1,0 +1,83 @@
+{
+  "git_commit": "58ba7fdaa9b1e0d24981f13c7cb54fbb7efb8c2d",
+  "git_status": "",
+  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "os": {
+    "NAME": "Ubuntu",
+    "ID": "ubuntu",
+    "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+    "VERSION_ID": "24.04",
+    "VERSION": "24.04.4 LTS (Noble Numbat)",
+    "VERSION_CODENAME": "noble",
+    "ID_LIKE": "debian",
+    "HOME_URL": "https://www.ubuntu.com/",
+    "SUPPORT_URL": "https://help.ubuntu.com/",
+    "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+    "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+    "UBUNTU_CODENAME": "noble",
+    "LOGO": "ubuntu-logo"
+  },
+  "kernel": "6.17.0-23-generic",
+  "ollama_version_output": "ollama version is 0.40.17",
+  "ollama_models": {
+    "models": [
+      {
+        "model": "qwen2.5:7b-instruct-q4_K_M",
+        "modified_at": "2026-11-24T17:19:27.727459Z",
+        "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+        "size": 4683087332,
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "7.6B",
+          "quantization_level": "Q4_K_M"
+        }
+      },
+      {
+        "model": "qwen2.5:7b-instruct-q8_0",
+        "modified_at": "2026-11-24T17:06:17.162894Z",
+        "digest": "2d9500c948416525a044cc51a47a1ef93deb045aebf2f61e8d6b3ac3a3cf2290",
+        "size": 8098538978,
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "7.6B",
+          "quantization_level": "Q8_0"
+        }
+      }
+    ]
+  },
+  "reported_gpu": "AMD Radeon RX 6900 XT, 16 GB",
+  "gpu_backend": "Not independently confirmed",
+  "test_count": 211,
+  "test_sha256": "418d1b5ffc6b2baac817bb36d6aec1d2f4d1adfeba0ab75d83693f71256ad4d8",
+  "protocol": {
+    "repetitions_per_model": 3,
+    "model_order_by_round": [
+      [
+        "q4",
+        "q8"
+      ],
+      [
+        "q8",
+        "q4"
+      ],
+      [
+        "q4",
+        "q8"
+      ]
+    ],
+    "request_concurrency": 1,
+    "warmup": "Recorded synthetic extraction before each run",
+    "residency": "Unload both benchmark models before each run",
+    "quality_reporting": "Repetition 1 primary; retain all repetitions"
+  }
+}
