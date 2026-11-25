@@ -20,4 +20,3 @@ data/raw/
 # Generated results; commit only the frozen v0.1 release
 /results/*
 !/results/v0.1/
-EOF
